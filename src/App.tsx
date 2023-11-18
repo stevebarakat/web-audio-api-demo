@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
+import { roxanne } from "./assets/roxanne";
 
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -9,14 +10,18 @@ function App() {
   const startOffset = 3;
   let startTime = 0;
 
-  fetchAudio("nelly").then((buf) => {
-    // executes when buffer has been decoded
-    buffer.current = buf;
+  console.log("roxanne.tracks[0].path", roxanne.tracks[0].path);
+
+  roxanne.tracks.forEach((track) => {
+    fetchAudio(track.path).then((buf) => {
+      // executes when buffer has been decoded
+      buffer.current = buf;
+    });
   });
 
   async function fetchAudio(name: string) {
     try {
-      const rsvp = await fetch(`${name}.mp3`);
+      const rsvp = await fetch(name);
       return audioCtx.current?.decodeAudioData(await rsvp.arrayBuffer()); // returns a Promise, buffer is arg for .then((arg) => {})
     } catch (err) {
       console.log(
