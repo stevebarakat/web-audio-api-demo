@@ -5,8 +5,9 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioCtx = useRef<AudioContext | undefined>();
   const buffer = useRef<AudioBuffer | undefined>();
-  var startOffset = 3;
-  var startTime = 0;
+  const audioBufferSourceNode = useRef<AudioBufferSourceNode | null>(null);
+  const startOffset = 3;
+  let startTime = 0;
 
   fetchAudio("nelly").then((buf) => {
     // executes when buffer has been decoded
@@ -15,7 +16,7 @@ function App() {
 
   async function fetchAudio(name: string) {
     try {
-      let rsvp = await fetch(`${name}.mp3`);
+      const rsvp = await fetch(`${name}.mp3`);
       return audioCtx.current?.decodeAudioData(await rsvp.arrayBuffer()); // returns a Promise, buffer is arg for .then((arg) => {})
     } catch (err) {
       console.log(
@@ -31,12 +32,15 @@ function App() {
   function play() {
     if (!buffer.current || !audioCtx.current) return;
     startTime = audioCtx.current?.currentTime;
-    var source = audioCtx.current?.createBufferSource();
+    audioBufferSourceNode.current = audioCtx.current?.createBufferSource();
     // Connect graph
-    source.buffer = buffer.current;
-    source.connect(audioCtx.current?.destination);
+    audioBufferSourceNode.current.buffer = buffer.current;
+    audioBufferSourceNode.current.connect(audioCtx.current?.destination);
     // Start playback, but make sure we stay in bound of the buffer.
-    source.start(0, startOffset % buffer.current.duration);
+    audioBufferSourceNode.current.start(
+      0,
+      startOffset % buffer.current.duration
+    );
     setIsPlaying(true);
   }
 
@@ -50,11 +54,30 @@ function App() {
     }
   }
 
+  function ff() {
+    if (!audioBufferSourceNode) return;
+    const currentTime = audioCtx.current?.currentTime;
+
+    audioBufferSourceNode.current?.stop(currentTime);
+    audioBufferSourceNode.current?.disconnect();
+
+    audioBufferSourceNode.current = audioCtx.current?.createBufferSource();
+    if (!audioBufferSourceNode.current) return;
+    audioBufferSourceNode.current.buffer = buffer.current;
+    audioBufferSourceNode.current.connect(audioCtx.current?.destination);
+    audioBufferSourceNode.current.start(
+      currentTime,
+      currentTime - startTime + 15
+    );
+    startTime -= 15;
+  }
+
   return (
     <>
       <button onClick={audioCtx.current ? pause : play}>
         {isPlaying ? "pause" : "play"}
       </button>
+      <button onClick={ff}>ff</button>
     </>
   );
 }
