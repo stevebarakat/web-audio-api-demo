@@ -67,13 +67,32 @@ function App() {
     audioBufferSourceNode.current.connect(audioCtx.current?.destination);
     audioBufferSourceNode.current.start(
       currentTime,
-      currentTime - startTime + 15
+      currentTime - startTime + 10
     );
-    startTime -= 15;
+    startTime -= 10;
+  }
+
+  function rew() {
+    if (!audioBufferSourceNode) return;
+    const currentTime = audioCtx.current?.currentTime;
+
+    audioBufferSourceNode.current?.stop(currentTime);
+    audioBufferSourceNode.current?.disconnect();
+
+    audioBufferSourceNode.current = audioCtx.current?.createBufferSource();
+    if (!audioBufferSourceNode.current) return;
+    audioBufferSourceNode.current.buffer = buffer.current;
+    audioBufferSourceNode.current.connect(audioCtx.current?.destination);
+    audioBufferSourceNode.current.start(
+      currentTime,
+      currentTime - startTime - 10
+    );
+    startTime += 10;
   }
 
   return (
     <>
+      <button onClick={rew}>rew</button>
       <button onClick={audioCtx.current ? pause : play}>
         {isPlaying ? "pause" : "play"}
       </button>
